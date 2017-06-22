@@ -1,3 +1,4 @@
+1.
 if marketposition > 0 then begin
 	sell next bar at entryprice(0) + (1 / PriceScale) * MinMove * lmt limit;
 	sell next bar at entryprice(0) - (1 / PriceScale) * MinMove * stp stop;
@@ -7,10 +8,14 @@ if  marketposition  < 0  then begin
 	buytocover next bar at entryprice(0) + (1 / PriceScale) * MinMove * stp stop;
 end;
 
+2. 
 停利保本
 进场超过十根
 if barssinceentry>10 and positionprofit>50 then sell next bar at lowest(low,3) stop ; 
 if barssinceentry>10 and positionprofit>50 then buytocover next bar at highest(high,3) stop ;
 
+3.
 用波动程度出场
 width*avgrange（10）
+
+4.
