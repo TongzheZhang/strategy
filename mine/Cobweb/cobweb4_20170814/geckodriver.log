@@ -1,0 +1,17 @@
+1502692859496	geckodriver	INFO	geckodriver 0.18.0
+1502692859506	geckodriver	INFO	Listening on 127.0.0.1:60516
+1502692861613	geckodriver::marionette	INFO	Starting browser C:\Program Files (x86)\Mozilla Firefox\firefox.exe with args ["-marionette"]
+[GFX1]: Potential driver version mismatch ignored due to missing DLLs igd10umd32 v= and igd10iumd32.dll v=0.0.0.0
+1502692864720	Marionette	INFO	Listening on port 60524
+1502692864862	Marionette	WARN	TLS certificate errors will be ignored for this session
+1502692877721	Marionette	INFO	Ceased listening
+s thrown and uncaught in a Task.
+
+Full message: TypeError: NetworkError when attempting to fetch resource.
+Full stack: 
+*************************
+1502692484298	Marionette	INFO	Ceased listening
+tening
+l stack: 
+*************************
+1502688812644	Marionette	INFO	Ceased listening
