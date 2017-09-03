@@ -11,105 +11,130 @@ Created on Thu Aug 03 13:37:25 2017
 calculate from one excel
 @author: Richard10ZTZ
 """
+import re
 
 
-
-def caloneexcel(test_csv, tempdate, lastI, lastU, lastM):
-    #print "entry caloneexcel"
-    row = []
-    for temprow in test_csv:
-        row.append(temprow)
+def caloneexcel(test_csv, tempdate):
     """find out the blank row"""
-    flagblank = 0
-    beginrow = 0    
-    while flagblank == 0:
-        for i in range(0, 10):
-            if row[i] == []:
-                beginrow = i+3
-                flagblank = 1
+    beginrow = []
+    beginrow.append(7)
+    endrow = []    
+
+    for i in range(6, len(lines)):
+        if lines[i] == "\n":
+            beginrow.append(i+2)
+            endrow.append(i-2)
+            break
+
+    
+    for i in range(beginrow[1]+2, len(lines)):
+        if lines[i] == "\n":
+            beginrow.append(i+2)
+            endrow.append(i-2)
+            break   
+        
+    for i in range(beginrow[2]+2, len(lines)):
+        if lines[i] == "\n":
+            endrow.append(i-2)
+            break   
+    tradecom = []
+    longcom = []
+    shortcom = []
+    M = 30
+    N = 20
     """find out the major company"""
     tradingC = []
     longC = []
     shortC = []
-    for i in range(0,20):
-        tradingC.append(row[beginrow+i][3])
-        longC.append(row[beginrow+i][6])
-        shortC.append(row[beginrow+i][9])
+    for i in range(beginrow[0], endrow[0]+1):
+        test = re.split('\t\t|\t', lines[i])[:4]
+        try:
+            if int(test[2].replace(",","")) >= M:
+                tradecom.append(test)
+                tradingC.append(test[1])
+        except IndexError:
+            return 4
+                
+    try:        
+        for i in range(beginrow[1], endrow[1]+1):
+            test = re.split('\t\t|\t', lines[i])[:4]
+            longcom.append(test)
+            longC.append(test[1])
+    
+        for i in range(beginrow[2], endrow[2]+1):
+            test = re.split('\t\t|\t', lines[i])[:4]
+            shortcom.append(test)
+            shortC.append(test[1])
+    except IndexError:
+        return 4
     set1 = set(tradingC)
     set2 = set(longC)
     set3 = set(shortC)
     settotal = set1 & set2 & set3 
-    settotal = list(settotal)
-    """record data of B, S, V"""
-    V = []
-    B = []
-    S = []
+    settotal = list(settotal)  
+    total = []
 
-    for majorname in settotal:
-        for t in range(0,20):
-            if row[beginrow+t][3] == majorname:
-                V.append(int(row[beginrow+t][4]))
-            if row[beginrow+t][6] == majorname:
-                B.append(int(row[beginrow+t][7]))
-            if row[beginrow+t][9] == majorname:
-                S.append(int(row[beginrow+t][10]))
-    Vrest = 0
-    Brest = 0
-    Srest = 0
-    for i in range(0,20):
-        if tradingC[i] not in settotal:
-            Vrest = Vrest + int(row[beginrow+i][4])
-        if longC[i] not in settotal:
-            Brest = Brest + int(row[beginrow+i][7])
-        if shortC[i] not in settotal:
-            Srest = Srest + int(row[beginrow+i][10])
-    V.append(Vrest)
-    B.append(Brest)
-    S.append(Srest)
-       
-    #print row[beginrow][4] 
-    #print row[beginrow+19][4]
-    sumV = float(sum(V))  
-    sumB = sum(B) 
-    sumS = sum(S)
-    sumTotal = (sumB+sumS)/sumV
-    Itrader = []
-    Utrader = []
-    for i in range(len(V)):
-        if (B[i]+S[i])/float(V[i]) >= sumTotal:
-            Itrader.append([V[i], B[i], S[i], (B[i]+S[i])/float(V[i])])
-        else:
-            Utrader.append([V[i], B[i], S[i], (B[i]+S[i])/float(V[i])])
-    IB = 0
-    IS = 0
-    UB = 0
-    US = 0
-    for i in range(len(Itrader)):
-        IB = IB + Itrader[i][1]
-        IS = IS + Itrader[i][2]
-    for i in range(len(Utrader)):
-        UB = UB + Utrader[i][1]
-        US = US + Utrader[i][2]
+    for i in range(0, len(settotal)):
+        temp = []
+        temp.append(settotal[i])
+        for j in range(0, len(tradingC)):
+            if tradingC[j] == settotal[i]:
+                temp.append(float(tradecom[j][2].replace(",","")))
+                temp.append(float(tradecom[j][3].replace(",","")))
+        for k in range(0, len(longC)):
+            if longC[k] == settotal[i]:
+                temp.append(float(longcom[k][2].replace(",","")))
+                temp.append(float(longcom[k][3].replace(",","")))
+        for l in range(0, len(shortC)):
+            if shortC[l] == settotal[i]:
+                temp.append(float(shortcom[l][2].replace(",","")))
+                temp.append(float(shortcom[l][3].replace(",","")))                
+        total.append(temp)
+    
+    for i in range(0, len(settotal)):
+        stat = (total[i][3]+total[i][5])/total[i][1]
+        total[i].append(stat)
+    newtotal = sorted(total, key=lambda stati:stati[7], reverse=1)
+    
+    itotal = newtotal[:N]
+    utotal = newtotal[N:]
+    TSI = 0.0
+    TSU = 0.0
+    ITS = 0.0
+    UTS = 0.0
+    Icannotuse = 0
+    Ucannotuse = 0
+    for i in range(0, len(itotal)):
+        try:
+            TSI = TSI + (itotal[i][4]-itotal[i][6])/(abs(itotal[i][4])+abs(itotal[i][6]))
+        except ZeroDivisionError:
+            Icannotuse = Icannotuse +1 
+        
+    ITS = TSI/(len(itotal)-Icannotuse)
+    for i in range(0, len(utotal)):
+        try:
+            TSU = TSU + (utotal[i][4]-utotal[i][6])/(abs(utotal[i][4])+abs(utotal[i][6]))
+        except ZeroDivisionError:
+            Ucannotuse = Ucannotuse +1
     try:
-        ITS = (IB-IS)/float(IB+IS)
-        UTS = (UB-US)/float(UB+US)
-        print tempdate,"totalnum,",len(settotal)+1
+        UTS = TSU/(len(utotal)-Ucannotuse)    
+        if ITS>UTS:
+            signal = 1
+        elif ITS<UTS:
+            signal = 2
+        else:
+            signal = 3
     except ZeroDivisionError:
-        print tempdate, "huanyue"
-        return [lastI, lastU, lastM]
-    """market sentiment difference"""
-    MSD = ITS - UTS  
-    return [ITS, UTS, MSD]
+        print "signal is not normal"
+        signal = 4
+    return signal
 if __name__ == '__main__':
 
-    """read the csv file
-    
+    """read the csv file"""
+    observationPeriod = 120
     recorddate = []
     recorddata = []
-    lastI = 0.0
-    lastU = 0.0
-    lastM = 0.0
-    for year in range(2010, 2018):
+    for year in range(2000, 2018):
         tempyear = str(year)
         for month in range(1, 13):
             if month < 10: tempmonth = "0" + str(month)
@@ -118,39 +143,31 @@ if __name__ == '__main__':
                 if day < 10: tempday = "0" + str(day)
                 else: tempday = str(day)
                 tempdate = tempyear+tempmonth+tempday
-                tempname = "data/"+tempdate+".csv"
+                '''修改这里!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'''
+                tempname = "../jm/"+tempdate+"_jm.txt" 
                 try:
-                    test_csv = csv.reader(open(tempname))
-                    result = caloneexcel(test_csv, tempdate, lastI, lastU, lastM)
-                    lastI = result[0]
-                    lastU = result[1]
-                    lastM = result[2]
+                    test_txt = open(tempname,"r")  
+                    lines = test_txt.readlines()#读取全部内
+                    result = caloneexcel(test_txt, tempdate) 
                     recorddate.append(tempdate)
                     recorddata.append(result)
                     #print result
                 except IOError:
                     print tempdate," not have this day"
                     pass
-    """
-    """testing"""
-              
-    test_csv = open("20160830_i.txt","r")  
-    lines = test_csv.readlines()#读取全部内容
-    #result = caloneexcel(test_csv, "20170417", 0.0, 0.0, 0.0)               
-    for i,var in enumerate(lines):
-        if var == "\n":
-            print i
     
-    """write data into .txt
-    w = open("finaldata.txt","w")
-    for i in range(0, len(recorddate)):
-        if recorddata[i][0] >= 0: tempI = "%.9f" % recorddata[i][0]
-        else: tempI = "%.8f" % recorddata[i][0]
-        if recorddata[i][1] >= 0: tempU = "%.9f" % recorddata[i][1]
-        else: tempU = "%.8f" % recorddata[i][1]
-        if recorddata[i][2] >= 0: tempM = "%.9f" % recorddata[i][2]
-        else: tempM = "%.8f" % recorddata[i][2]
-
-        w.write(recorddate[i][2:]+" "+tempI+" "+tempU+" "+tempM+"\n")
-    w.close()
+    """testing
+              
+    test_txt = open("../i/20131018_i.txt","r")  
+    lines = test_txt.readlines()#读取全部内
+    result = caloneexcel(test_txt, "20170818") 
     """
+    
+    """write data into .txt"""
+    """修改这里！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！"""
+    w = open("finaldata_jm.txt","w")
+    for i in range(observationPeriod, len(recorddate)):
+        w.write(recorddate[i][2:]+" "+str(recorddata[i])+"\n")
+    w.close()
+    print "finish！"
+    
